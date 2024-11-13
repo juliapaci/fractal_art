@@ -16,7 +16,9 @@ int main(void) {
 
         BeginDrawing();
             ClearBackground(DARKGRAY);
-            draw_shape(&shape);
+            shape_draw(&shape);
+
+            DrawCircleLinesV(GetMousePosition(), POINT_RADIUS, POINT_COLOUR);
         EndDrawing();
     }
 
