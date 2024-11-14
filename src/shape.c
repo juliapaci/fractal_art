@@ -1,6 +1,7 @@
 #include "shape.h"
 
 #include <raymath.h>
+#include <stdint.h>
 
 Shape shape_init(size_t capacity) {
     return (Shape) {
@@ -12,11 +13,22 @@ Shape shape_init(size_t capacity) {
 
 void shape_push(Shape *shape, Vector2 point) {
     if(shape->used == shape->capacity) {
-        shape->capacity += 5;
+        shape->capacity += SMALL_ALLOC;
         shape->points = realloc(shape->points, shape->capacity * sizeof(Vector2));
     }
 
     shape->points[shape->used++] = point;
+}
+
+void shape_prediction_push(Shape *shape) {
+    if(shape->used + PREDICTION_DEPTH >= shape->capacity) {
+        shape->capacity += BIG_ALLOC;
+        shape->points = realloc(shape->points, shape->capacity * sizeof(Vector2));
+    }
+
+    SHAPE_PREDICTION(shape, {
+        shape->points[shape->used++] = point;
+    });
 }
 
 void shape_remove(Shape *shape, size_t index) {
@@ -42,6 +54,28 @@ Vector2 _rotate_point(Vector2 point, Vector2 pivot, float angle) {
     );
 }
 
+void shape_draw_prediction(Shape *shape) {
+    if(shape->used == 0)
+        return;
+
+    const Vector2 mpos = GetMousePosition();
+
+    const Vector2 last = shape->points[shape->used - 1];
+    const float angle = -Vector2LineAngle(mpos, last);
+    const Vector2 line = Vector2Scale(
+        Vector2Normalize(Vector2Subtract(mpos, last)),
+        Vector2Distance(mpos, last)
+    );
+
+    Vector2 prev_pont = mpos;
+    for(size_t i = 0; i < PREDICTION_DEPTH; i++) {
+        const Vector2 point = _rotate_point(Vector2Add(prev_pont, Vector2Scale(line, (PREDICTION_DEPTH - i)*(float)1./PREDICTION_DEPTH)), prev_pont, angle*(1 + i));
+
+        DrawLineV(prev_pont, point, LINE_COLOUR);
+        prev_pont = point;
+    }
+}
+
 void shape_draw(Shape *shape) {
     if(shape->used == 0)
         return;
@@ -59,22 +93,5 @@ void shape_draw(Shape *shape) {
         DrawCircleLinesV(next, POINT_RADIUS, POINT_COLOUR);
 
         DrawLineV(prev, next, LINE_COLOUR);
-    }
-
-    // prediction
-    const Vector2 last = shape->points[shape->used - 1];
-    const float angle = -Vector2LineAngle(mpos, last);
-    Vector2 line = Vector2Scale(
-        Vector2Normalize(Vector2Subtract(mpos, last)),
-        Vector2Distance(mpos, last)
-    );
-
-    Vector2 prev_pont = mpos;
-    for(size_t i = 0; i < PREDICTION_DEPTH; i++) {
-        const Vector2 point = _rotate_point(Vector2Add(prev_pont, line), prev_pont, angle*(1 + i));
-        line = Vector2Scale(line, 1./PREDICTION_DEPTH);
-
-        DrawLineV(prev_pont, point, LINE_COLOUR);
-        prev_pont = point;
     }
 }

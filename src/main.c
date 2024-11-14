@@ -1,4 +1,5 @@
 #include <raylib.h>
+#include <raymath.h>
 
 #include "shape.h"
 
@@ -13,10 +14,15 @@ int main(void) {
     while(!WindowShouldClose()) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             shape_push(&shape, GetMousePosition());
+        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+            shape_prediction_push(&shape);
 
         BeginDrawing();
             ClearBackground(DARKGRAY);
             shape_draw(&shape);
+            SHAPE_PREDICTION((&shape), {
+                DrawLineV(prev_pont, point, LINE_COLOUR);
+            });
 
             DrawCircleLinesV(GetMousePosition(), POINT_RADIUS, POINT_COLOUR);
         EndDrawing();
