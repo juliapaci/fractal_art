@@ -9,7 +9,7 @@ int main(void) {
     InitWindow(800, 600, "Fractal Art");
     SetTargetFPS(60);
 
-    Shape shape = shape_init(5);
+    Shape shape = shape_init();
 
     while(!WindowShouldClose()) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
@@ -20,9 +20,7 @@ int main(void) {
         BeginDrawing();
             ClearBackground(DARKGRAY);
             shape_draw(&shape);
-            SHAPE_PREDICTION((&shape), {
-                DrawLineV(prev_pont, point, LINE_COLOUR);
-            });
+            shape_draw_prediction(&shape, PREDICTION(shape.used - 1));
 
             DrawCircleLinesV(GetMousePosition(), POINT_RADIUS, POINT_COLOUR);
         EndDrawing();
