@@ -78,11 +78,28 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
         Vector2Distance(prediction.mpos, last)
     );
 
+    Vector3 components = {0};
+    Color colour = LINE_COLOUR;
     Vector2 prev_pont = prediction.mpos;
     for(size_t i = 0; i < PREDICTION_DEPTH; i++) {
-        const Vector2 point = _rotate_point(Vector2Add(prev_pont, Vector2Scale(line, (PREDICTION_DEPTH - i)*(float)1./PREDICTION_DEPTH)), prev_pont, angle*(1 + i));
+        const Vector2 point = _rotate_point(
+            Vector2Add(
+                prev_pont,
+                Vector2Scale(line,
+                    1.0 - (float)i/PREDICTION_DEPTH)
+                ),
+            prev_pont,
+            angle*(1 + i)
+        );
 
-        DrawLineV(prev_pont, point, LINE_COLOUR);
+        const Color prev_colour = colour;
+        const uint8_t field = i % 3;
+        float *component = (float *)&components + field;
+        *component += 255 * 3./PREDICTION_DEPTH;
+        *((uint8_t *)&colour + field) += *component;
+
+        // TODO: DrawLineStrip()
+        DrawLineGradient(prev_pont, point, 1.0, prev_colour, colour);
         prev_pont = point;
     }
 }
@@ -107,7 +124,6 @@ void shape_draw(Shape *shape) {
         DrawLineV(prev, next, LINE_COLOUR);
 
         if(i < shape->p_used - 1 && i == shape->predictions[prediction].index) {
-            DrawText(TextFormat("%d", prediction), 20, 20, 30, BLUE);
             prediction++;
             shape_draw_prediction(shape, shape->predictions[prediction]);
         }
