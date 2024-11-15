@@ -95,10 +95,9 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
         const Color prev_colour = colour;
         const uint8_t field = i % 3;
         float *component = (float *)&components + field;
-        *component += 255 * 3./PREDICTION_DEPTH;
-        *((uint8_t *)&colour + field) += *component;
+        *component += 3./PREDICTION_DEPTH;
+        *((uint8_t *)&colour + field) += 255 * *component;
 
-        // TODO: DrawLineStrip()
         DrawLineGradient(prev_pont, point, 1.0, prev_colour, colour);
         prev_pont = point;
     }
@@ -108,27 +107,13 @@ void shape_draw(Shape *shape) {
     if(shape->used == 0)
         return;
 
-    const Vector2 mpos = GetMousePosition();
+    DrawLineV(GetMousePosition(), shape->points[shape->used - 1], LINE_COLOUR);
 
-    DrawCircleV(shape->points[0], POINT_RADIUS, POINT_COLOUR);
-    DrawLineV(mpos, shape->points[shape->used - 1], LINE_COLOUR);
+    for(size_t i = 0; i < shape->used; i++)
+        DrawCircleV(shape->points[i], POINT_RADIUS, POINT_COLOUR);
 
-    size_t prediction = 0;
-    for(size_t i = 0; i < shape->used-1; i++) {
-        const Vector2 prev = shape->points[i];
-        const Vector2 next = shape->points[i + 1];
+    for(size_t i = 0; i < shape->p_used; i++)
+        shape_draw_prediction(shape, shape->predictions[i]);
 
-        DrawCircleLinesV(prev, POINT_RADIUS, POINT_COLOUR);
-        DrawCircleLinesV(next, POINT_RADIUS, POINT_COLOUR);
-
-        DrawLineV(prev, next, LINE_COLOUR);
-
-        if(i < shape->p_used - 1 && i == shape->predictions[prediction].index) {
-            prediction++;
-            shape_draw_prediction(shape, shape->predictions[prediction]);
-        }
-    }
-
-    if(shape->p_used >= 1 && shape->predictions[shape->p_used - 1].index == shape->used - 1)
-        shape_draw_prediction(shape, shape->predictions[shape->p_used - 1]);
+    DrawLineStrip(shape->points, shape->used, LINE_COLOUR);
 }

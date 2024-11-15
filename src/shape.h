@@ -23,7 +23,7 @@ typedef struct {
     size_t capacity;
     size_t used;
 
-    // indecies of points which predictions will be drawn
+    // indecies of points whose predictions will be drawn
     Prediction *predictions;
     size_t p_capacity;
     size_t p_used;

@@ -5,7 +5,7 @@
 
 int main(void) {
     SetTraceLogLevel(LOG_ERROR);
-    // SetConfigFlags(FLAG_WINDOW_RESIZABLE);
+    SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Fractal Art");
     SetTargetFPS(60);
 
@@ -14,7 +14,7 @@ int main(void) {
     while(!WindowShouldClose()) {
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             shape_push(&shape, GetMousePosition());
-        if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
+        else if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
             shape_prediction_push(&shape);
 
         BeginDrawing();
