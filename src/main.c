@@ -4,7 +4,7 @@
 #include "shape.h"
 
 int main(void) {
-    SetTraceLogLevel(LOG_ERROR);
+    // SetTraceLogLevel(LOG_ERROR);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Fractal Art");
     SetTargetFPS(60);
@@ -16,6 +16,8 @@ int main(void) {
             shape_push(&shape, GetMousePosition());
         else if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
             shape_prediction_push(&shape);
+        else if(IsKeyPressed(KEY_S))
+            TakeScreenshot("fractal_drawing.png");
 
         BeginDrawing();
             ClearBackground(DARKGRAY);

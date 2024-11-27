@@ -71,36 +71,34 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
     if(shape->used == 0)
         return;
 
+    Vector2 points[PREDICTION_DEPTH];
+
     const Vector2 last = shape->points[prediction.index];
-    const float angle = -Vector2LineAngle(prediction.mpos, last);
+    const float angle = -Vector2LineAngle(prediction.pos, last);
     const Vector2 line = Vector2Scale(
-        Vector2Normalize(Vector2Subtract(prediction.mpos, last)),
-        Vector2Distance(prediction.mpos, last)
+        Vector2Normalize(Vector2Subtract(prediction.pos, last)),
+        Vector2Distance(prediction.pos, last)
     );
 
-    Vector3 components = {0};
-    Color colour = LINE_COLOUR;
-    Vector2 prev_pont = prediction.mpos;
+    Vector2 prev_point = prediction.pos;
     for(size_t i = 0; i < PREDICTION_DEPTH; i++) {
         const Vector2 point = _rotate_point(
             Vector2Add(
-                prev_pont,
+                prev_point,
                 Vector2Scale(line,
-                    1.0 - (float)i/PREDICTION_DEPTH)
-                ),
-            prev_pont,
+                    1.0 - (float)i/PREDICTION_DEPTH
+                )
+            ),
+            prev_point,
             angle*(1 + i)
         );
 
-        const Color prev_colour = colour;
-        const uint8_t field = i % 3;
-        float *component = (float *)&components + field;
-        *component += 3./PREDICTION_DEPTH;
-        *((uint8_t *)&colour + field) += 255 * *component;
-
-        DrawLineGradient(prev_pont, point, 1.0, prev_colour, colour);
-        prev_pont = point;
+        prev_point = point;
+        points[i] = point;
     }
+
+    DrawLineV(GetMousePosition(), points[0], LINE_COLOUR);
+    DrawLineStripGradient(points, PREDICTION_DEPTH, LINE_COLOUR, LINE_END_COLOUR);
 }
 
 void shape_draw(Shape *shape) {

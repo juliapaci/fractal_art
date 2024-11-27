@@ -8,11 +8,11 @@
 #define POINT_RADIUS 5
 #define POINT_COLOUR GREEN
 #define LINE_COLOUR POINT_COLOUR
-#define ENDING_COLOUR PURPLE
+#define LINE_END_COLOUR PURPLE
 
 typedef struct {
     size_t index;
-    Vector2 mpos;
+    Vector2 pos;
 } Prediction;
 
 #define PREDICTION(index) (Prediction){index, GetMousePosition()}
