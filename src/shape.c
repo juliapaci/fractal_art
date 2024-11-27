@@ -3,7 +3,7 @@
 #include <raymath.h>
 #include <stdint.h>
 
-Shape shape_init() {
+Shape shape_init(void) {
     return (Shape) {
         .points = malloc(SMALL_ALLOC * sizeof(Vector2)),
         .capacity = SMALL_ALLOC,
@@ -67,11 +67,13 @@ Vector2 _rotate_point(Vector2 point, Vector2 pivot, float angle) {
     );
 }
 
+#include <stdio.h>
 void shape_draw_prediction(Shape *shape, Prediction prediction) {
     if(shape->used == 0)
         return;
 
-    Vector2 points[PREDICTION_DEPTH];
+    Vector2 points[PREDICTION_DEPTH + 1];
+    points[0] = prediction.pos;
 
     const Vector2 last = shape->points[prediction.index];
     const float angle = -Vector2LineAngle(prediction.pos, last);
@@ -90,22 +92,19 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
                 )
             ),
             prev_point,
-            angle*(1 + i)
+                angle*(1 + i)
         );
 
         prev_point = point;
-        points[i] = point;
+        points[i + 1] = point;
     }
 
-    DrawLineV(GetMousePosition(), points[0], LINE_COLOUR);
-    DrawLineStripGradient(points, PREDICTION_DEPTH, LINE_COLOUR, LINE_END_COLOUR);
+    DrawLineStripGradient(points, PREDICTION_DEPTH + 1, LINE_COLOUR, LINE_END_COLOUR);
 }
 
 void shape_draw(Shape *shape) {
     if(shape->used == 0)
         return;
-
-    DrawLineV(GetMousePosition(), shape->points[shape->used - 1], LINE_COLOUR);
 
     for(size_t i = 0; i < shape->used; i++)
         DrawCircleV(shape->points[i], POINT_RADIUS, POINT_COLOUR);
@@ -114,4 +113,30 @@ void shape_draw(Shape *shape) {
         shape_draw_prediction(shape, shape->predictions[i]);
 
     DrawLineStrip(shape->points, shape->used, LINE_COLOUR);
+}
+
+Shapes shapes_init(void) {
+    return (Shapes) {
+        .shapes = malloc(SMALL_ALLOC * sizeof(Shape)),
+        .capacity = SMALL_ALLOC,
+        .used = 0
+    };
+}
+
+void shapes_push(Shapes *shapes, Shape *shape) {
+    if(shapes->used == shapes->capacity) {
+        shapes->capacity += SMALL_ALLOC;
+        shapes->shapes = realloc(shapes->shapes, shapes->capacity * sizeof(shapes->capacity));
+    }
+
+    shapes->shapes[shapes->used++] = *shape;
+}
+
+void shapes_free(Shapes *shapes) {
+    for(size_t i = 0; i < shapes->used; i++)
+        shape_free(&shapes->shapes[i]);
+
+    free(shapes->shapes);
+    shapes->used = shapes->capacity = 0;
+    shapes->shapes = NULL;
 }

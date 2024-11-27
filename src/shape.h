@@ -3,7 +3,7 @@
 
 #define SMALL_ALLOC 5
 
-#define PREDICTION_DEPTH 100
+#define PREDICTION_DEPTH 1000
 
 #define POINT_RADIUS 5
 #define POINT_COLOUR GREEN
@@ -29,7 +29,7 @@ typedef struct {
     size_t p_used;
 } Shape;
 
-Shape shape_init();
+Shape shape_init(void);
 void shape_push(Shape *shape, Vector2 point);
 void shape_prediction_push(Shape *shape);
 void shape_remove(Shape *shape, size_t index);
@@ -39,3 +39,14 @@ void shape_free(Shape *shape);
 Vector2 _rotate_point(Vector2 point, Vector2 pivot, float angle);
 void shape_draw_prediction(Shape *shape, Prediction prediction);
 void shape_draw(Shape *shape);
+
+typedef struct {
+    Shape *shapes;
+    size_t capacity;
+    size_t used;
+} Shapes;
+
+// TODO: make all this da stuff generic for `Shape` and `Shapes`
+Shapes shapes_init(void);
+void shapes_push(Shapes *shapes, Shape *shape);
+void shapes_free(Shapes *shapes);
