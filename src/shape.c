@@ -5,56 +5,42 @@
 
 Shape shape_init(void) {
     return (Shape) {
-        .points = malloc(SMALL_ALLOC * sizeof(Vector2)),
-        .capacity = SMALL_ALLOC,
-        .used = 0,
+        .point_size = sizeof(Vector2),
+        .point_da = da_init(sizeof(Vector2)),
 
-        .predictions = malloc(SMALL_ALLOC * sizeof(Prediction)),
-        .p_capacity = SMALL_ALLOC,
-        .p_used = 0
+        .prediction_size = sizeof(Prediction),
+        .prediction_da = da_init(sizeof(Prediction))
     };
 }
 
-void shape_push(Shape *shape, Vector2 point) {
-    if(shape->used == shape->capacity) {
-        shape->capacity += SMALL_ALLOC;
-        shape->points = realloc(shape->points, shape->capacity * sizeof(Vector2));
-    }
+Vector2 shape_point_get(Shape *shape, size_t index) {
+    return *(Vector2 *)da_get(&shape->point_da, index);
+}
 
-    shape->points[shape->used++] = point;
+Prediction shape_prediction_get(Shape *shape, size_t index) {
+    return *(Prediction *)da_get(&shape->prediction_da, index);
+}
+
+void shape_point_push(Shape *shape, Vector2 point) {
+    da_push(&shape->point_da, &point, 0);
 }
 
 void shape_prediction_push(Shape *shape) {
-    if(shape->p_used + PREDICTION_DEPTH >= shape->p_capacity) {
-        shape->p_capacity += PREDICTION_DEPTH;
-        shape->predictions = realloc(shape->predictions, shape->p_capacity * sizeof(Prediction));
-    }
-
-    shape->predictions[shape->p_used++] = PREDICTION(shape->used - 1);
+    const Prediction prediction = PREDICTION(shape->point_da.used - 1);
+    da_push(&shape->prediction_da, (void *)&prediction, PREDICTION_DEPTH);
 }
 
-void shape_remove(Shape *shape, size_t index) {
-    shape->used--;
-    for(size_t i = index; i < shape->used; i++)
-        shape->points[i] = shape->points[i + 1];
+void shape_point_remove(Shape *shape, size_t index) {
+    da_remove(&shape->point_da, index);
 }
 
 void shape_prediction_remove(Shape *shape, size_t index) {
-    shape->p_used--;
-    for(size_t i = index; i < shape->p_used; i++)
-        shape->predictions[i] = shape->predictions[i + 1];
+    da_remove(&shape->prediction_da, index);
 }
 
 void shape_free(Shape *shape) {
-    free(shape->points);
-    shape->points = NULL;
-    shape->used = 0;
-    shape->capacity = 0;
-
-    free(shape->predictions);
-    shape->predictions = NULL;
-    shape->p_used = 0;
-    shape->p_capacity = 0;
+    da_free(&shape->point_da);
+    da_free(&shape->prediction_da);
 }
 
 Vector2 _rotate_point(Vector2 point, Vector2 pivot, float angle) {
@@ -67,20 +53,23 @@ Vector2 _rotate_point(Vector2 point, Vector2 pivot, float angle) {
     );
 }
 
-#include <stdio.h>
 void shape_draw_prediction(Shape *shape, Prediction prediction) {
-    if(shape->used == 0)
+    const size_t point_amount = shape->point_da.used;
+    if(point_amount == 0)
         return;
 
     Vector2 points[PREDICTION_DEPTH + 1];
     points[0] = prediction.pos;
 
-    const Vector2 last = shape->points[prediction.index];
-    const float angle = -Vector2LineAngle(prediction.pos, last);
+    const Vector2 last = shape_point_get(shape, prediction.index);
     const Vector2 line = Vector2Scale(
         Vector2Normalize(Vector2Subtract(prediction.pos, last)),
         Vector2Distance(prediction.pos, last)
     );
+    float angles[point_amount];
+    for(size_t i = 0; i < point_amount - 1; i++)
+        angles[i] = Vector2LineAngle(shape_point_get(shape, i), shape_point_get(shape, i + 1));
+    angles[point_amount - 1] = Vector2LineAngle(last, prediction.pos);
 
     Vector2 prev_point = prediction.pos;
     for(size_t i = 0; i < PREDICTION_DEPTH; i++) {
@@ -92,7 +81,7 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
                 )
             ),
             prev_point,
-                angle*(1 + i)
+            angles[i%point_amount]*(1 + i)
         );
 
         prev_point = point;
@@ -103,40 +92,35 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
 }
 
 void shape_draw(Shape *shape) {
-    if(shape->used == 0)
+    if(shape->point_da.used == 0)
         return;
 
-    for(size_t i = 0; i < shape->used; i++)
-        DrawCircleV(shape->points[i], POINT_RADIUS, POINT_COLOUR);
+    for(size_t i = 0; i < shape->point_da.used; i++)
+        DrawCircleV(shape_point_get(shape, i), POINT_RADIUS, POINT_COLOUR);
 
-    for(size_t i = 0; i < shape->p_used; i++)
-        shape_draw_prediction(shape, shape->predictions[i]);
+    for(size_t i = 0; i < shape->prediction_da.used; i++)
+        shape_draw_prediction(shape, shape_prediction_get(shape, i));
 
-    DrawLineStrip(shape->points, shape->used, LINE_COLOUR);
+    DrawLineStrip((Vector2 *)shape->point_da.elements, shape->point_da.used, LINE_COLOUR);
 }
 
 Shapes shapes_init(void) {
     return (Shapes) {
-        .shapes = malloc(SMALL_ALLOC * sizeof(Shape)),
-        .capacity = SMALL_ALLOC,
-        .used = 0
+        .da = da_init(sizeof(Shape))
     };
 }
 
-void shapes_push(Shapes *shapes, Shape *shape) {
-    if(shapes->used == shapes->capacity) {
-        shapes->capacity += SMALL_ALLOC;
-        shapes->shapes = realloc(shapes->shapes, shapes->capacity * sizeof(shapes->capacity));
-    }
+Shape *shapes_get(Shapes *shapes, size_t index) {
+    return (Shape *)da_get(&shapes->da, index);
+}
 
-    shapes->shapes[shapes->used++] = *shape;
+void shapes_push(Shapes *shapes, Shape *shape) {
+    da_push(&shapes->da, shape, 0);
 }
 
 void shapes_free(Shapes *shapes) {
-    for(size_t i = 0; i < shapes->used; i++)
-        shape_free(&shapes->shapes[i]);
+    for(size_t i = 0; i < shapes->da.used; i++)
+        shape_free(shapes_get(shapes, i));
 
-    free(shapes->shapes);
-    shapes->used = shapes->capacity = 0;
-    shapes->shapes = NULL;
+    da_free(&shapes->da);
 }

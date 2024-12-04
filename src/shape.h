@@ -1,7 +1,9 @@
+#ifndef __SHAPE_H__
+#define __SHAPE_H__
+
 #include <raylib.h>
 #include <stdlib.h>
-
-#define SMALL_ALLOC 5
+#include "da.h"
 
 #define PREDICTION_DEPTH 1000
 
@@ -19,20 +21,21 @@ typedef struct {
 
 // dynamic array
 typedef struct {
-    Vector2 *points;
-    size_t capacity;
-    size_t used;
+    // points
+    size_t point_size;
+    struct DA point_da;
 
     // indecies of points whose predictions will be drawn
-    Prediction *predictions;
-    size_t p_capacity;
-    size_t p_used;
+    size_t prediction_size;
+    struct DA prediction_da;
 } Shape;
 
 Shape shape_init(void);
-void shape_push(Shape *shape, Vector2 point);
+Vector2 shape_point_get(Shape *shape, size_t index);
+Prediction shape_prediction_get(Shape *shape, size_t index);
+void shape_point_push(Shape *shape, Vector2 point);
 void shape_prediction_push(Shape *shape);
-void shape_remove(Shape *shape, size_t index);
+void shape_point_remove(Shape *shape, size_t index);
 void shape_prediction_remove(Shape *shape, size_t index);
 void shape_free(Shape *shape);
 
@@ -41,12 +44,12 @@ void shape_draw_prediction(Shape *shape, Prediction prediction);
 void shape_draw(Shape *shape);
 
 typedef struct {
-    Shape *shapes;
-    size_t capacity;
-    size_t used;
+    struct DA da;
 } Shapes;
 
-// TODO: make all this da stuff generic for `Shape` and `Shapes`
 Shapes shapes_init(void);
+Shape *shapes_get(Shapes *shapes, size_t index);
 void shapes_push(Shapes *shapes, Shape *shape);
 void shapes_free(Shapes *shapes);
+
+#endif // __SHAPE_H_

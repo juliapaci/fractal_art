@@ -1,7 +1,0 @@
-[
-	{
-		"directory": "/home/julia/gitvc/fractal_art",
-		"arguments": ["/usr/bin/cc", "-I./third_party/raylib/src", "-L./third_party/raylib/src", "-lraylib", "-Wl,-rpath=./third_party/raylib/src", "-lm"],
-		"file": "N/A"
-	}
-]

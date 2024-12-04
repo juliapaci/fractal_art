@@ -1,10 +1,12 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include <stdio.h>
+
 #include "shape.h"
 
 int main(void) {
-    // SetTraceLogLevel(LOG_ERROR);
+    SetTraceLogLevel(LOG_ERROR);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE);
     InitWindow(800, 600, "Fractal Art");
     SetTargetFPS(60);
@@ -15,12 +17,13 @@ int main(void) {
 
     bool info = true;
     while(!WindowShouldClose()) {
-        Shape *shape = &shapes.shapes[shapes.used - 1];
-        if(shapes.used == 0)
+        const size_t shapes_amount = shapes.da.used;
+        Shape *shape = shapes_get(&shapes, shapes_amount - 1);
+        if(shapes_amount == 0)
             shape = &(Shape){0};
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
-            shape_push(shape, GetMousePosition());
+            shape_point_push(shape, GetMousePosition());
         else if(IsMouseButtonPressed(MOUSE_BUTTON_RIGHT))
             shape_prediction_push(shape);
         else if(IsKeyPressed(KEY_S)) {
@@ -34,13 +37,12 @@ int main(void) {
 
         BeginDrawing();
             ClearBackground(DARKGRAY);
-            for(size_t i = 0; i < shapes.used; i++) {
-                shape_draw(&shapes.shapes[i]);
-            }
+            for(size_t i = 0; i < shapes_amount; i++)
+                shape_draw(shapes_get(&shapes, i));
 
-            if(info && shape->used > 0) {
-                shape_draw_prediction(shape, PREDICTION(shape->used - 1));
-                DrawLineV(GetMousePosition(), shape->points[shape->used - 1], LINE_COLOUR);
+            if(info && shape->point_da.used > 0) {
+                shape_draw_prediction(shape, PREDICTION(shape->point_da.used - 1));
+                DrawLineV(GetMousePosition(), shape_point_get(shape, shape->point_da.used - 1), LINE_COLOUR);
             }
 
             DrawCircleLinesV(GetMousePosition(), POINT_RADIUS, POINT_COLOUR);

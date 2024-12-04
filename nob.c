@@ -4,7 +4,6 @@
 #define CFLAGS "-Wall", "-Wextra", "-ggdb"
 #define LDFLAGS "-I./third_party/raylib/src",   \
     "-L./third_party/raylib/src", "-lraylib",   \
-    "-Wl,-rpath=./third_party/raylib/src",      \
     "-lm"
 #define LDFLAGS_DELIM "\", \""
 
@@ -55,7 +54,7 @@ int main(int argc, char *argv[]) {
 
     create_compile_commands();
     build_raylib();
-    CMD("cc", CFLAGS, "-o", "fractal_art", "src/main.c", "src/shape.c", LDFLAGS);
+    CMD("cc", CFLAGS, "-o", "fractal_art", "src/main.c", "src/shape.c", "src/da.c", LDFLAGS);
 
     return 0;
 }
