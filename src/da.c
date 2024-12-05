@@ -18,13 +18,13 @@ void *da_get(struct DA *da, size_t index) {
 
 void da_push(struct DA *da, void *elem, size_t overstep) {
     if(da->used + overstep == da->capacity) {
-        da->capacity += overstep == 0 ? SMALL_ALLOC : overstep;
+        da->capacity += SMALL_ALLOC * (overstep + 1*overstep==0);
         da->elements = realloc(da->elements, da->capacity * da->elem_size);
     }
 
     memcpy(
         ((uint8_t *)da->elements) + da->elem_size * da->used++,
-        (uint8_t *)elem,
+        elem,
         da->elem_size
     );
 }

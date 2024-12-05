@@ -14,19 +14,20 @@
 
 typedef struct {
     size_t index;
+
+    // state
+    size_t point_amount;
     Vector2 pos;
 } Prediction;
 
-#define PREDICTION(index) (Prediction){index, GetMousePosition()}
+#define PREDICTION(shape, index) (Prediction){index, (shape).point_da.used, GetMousePosition()}
 
 // dynamic array
 typedef struct {
     // points
-    size_t point_size;
     struct DA point_da;
 
     // indecies of points whose predictions will be drawn
-    size_t prediction_size;
     struct DA prediction_da;
 } Shape;
 

@@ -19,6 +19,4 @@ void da_push(struct DA *da, void *elem, size_t overstep);
 void da_remove(struct DA *da, size_t index);
 void da_free(struct DA *da);
 
-
-
 #endif // __DA_H__

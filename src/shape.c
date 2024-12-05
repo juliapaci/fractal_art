@@ -5,10 +5,7 @@
 
 Shape shape_init(void) {
     return (Shape) {
-        .point_size = sizeof(Vector2),
         .point_da = da_init(sizeof(Vector2)),
-
-        .prediction_size = sizeof(Prediction),
         .prediction_da = da_init(sizeof(Prediction))
     };
 }
@@ -26,7 +23,7 @@ void shape_point_push(Shape *shape, Vector2 point) {
 }
 
 void shape_prediction_push(Shape *shape) {
-    const Prediction prediction = PREDICTION(shape->point_da.used - 1);
+    const Prediction prediction = PREDICTION(*shape, shape->point_da.used - 1);
     da_push(&shape->prediction_da, (void *)&prediction, PREDICTION_DEPTH);
 }
 
@@ -54,8 +51,7 @@ Vector2 _rotate_point(Vector2 point, Vector2 pivot, float angle) {
 }
 
 void shape_draw_prediction(Shape *shape, Prediction prediction) {
-    const size_t point_amount = shape->point_da.used;
-    if(point_amount == 0)
+    if(prediction.point_amount == 0)
         return;
 
     Vector2 points[PREDICTION_DEPTH + 1];
@@ -66,10 +62,11 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
         Vector2Normalize(Vector2Subtract(prediction.pos, last)),
         Vector2Distance(prediction.pos, last)
     );
-    float angles[point_amount];
-    for(size_t i = 0; i < point_amount - 1; i++)
-        angles[i] = Vector2LineAngle(shape_point_get(shape, i), shape_point_get(shape, i + 1));
-    angles[point_amount - 1] = Vector2LineAngle(last, prediction.pos);
+    float angles[prediction.point_amount];
+    // TODO: weighted by line length maybe?
+    for(size_t i = 0; i < prediction.point_amount - 1; i++)
+        angles[i] = -Vector2LineAngle(shape_point_get(shape, i + 1), shape_point_get(shape, i));
+    angles[prediction.point_amount - 1] = -Vector2LineAngle(prediction.pos, last);
 
     Vector2 prev_point = prediction.pos;
     for(size_t i = 0; i < PREDICTION_DEPTH; i++) {
@@ -81,7 +78,7 @@ void shape_draw_prediction(Shape *shape, Prediction prediction) {
                 )
             ),
             prev_point,
-            angles[i%point_amount]*(1 + i)
+            angles[i%prediction.point_amount]*(1 + i)
         );
 
         prev_point = point;
