@@ -10,15 +10,15 @@ int main(void) {
     SetTargetFPS(60);
 
     Shapes shapes = shapes_init();
-    Shape shape_default = shape_init();
-    shapes_push(&shapes, &shape_default);
+    Shape new_shape = shape_init();
+    shapes_push(&shapes, &new_shape);
 
     bool info = true;
     while(!WindowShouldClose()) {
         const size_t shapes_amount = shapes.da.used;
         Shape *shape = shapes_get(&shapes, shapes_amount - 1);
         if(shapes_amount == 0)
-            shape = &shape_default;
+            shape = &(Shape){0};
 
         if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))
             shape_point_push(shape, GetMousePosition());
@@ -27,8 +27,10 @@ int main(void) {
         else if(IsKeyPressed(KEY_S)) {
             if(IsKeyDown(KEY_LEFT_SHIFT))
                 TakeScreenshot("fractal_drawing.png");
-            else
-                shapes_push(&shapes, &shape_default);
+            else {
+                Shape new_shape = shape_init();
+                shapes_push(&shapes, &new_shape);
+            }
         }
         else if(IsKeyPressed(KEY_D))
             info = !info;
@@ -40,6 +42,7 @@ int main(void) {
 
             if(info && shape->point_da.used > 0) {
                 shape_draw_prediction(shape, PREDICTION(*shape, shape->point_da.used - 1));
+
                 DrawLineV(GetMousePosition(), shape_point_get(shape, shape->point_da.used - 1), LINE_COLOUR);
                 DrawCircleLinesV(GetMousePosition(), POINT_RADIUS, POINT_COLOUR);
             }
